@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Home Budget Calculator — zigbee.com.au</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#C8DCF0;--bg-card:#FFFFFF;--bg-card2:#EBF3FA;--bg-card3:#F0F6FB;
+  --electric:#0077CC;--el-light:rgba(0,119,204,0.10);--el-mid:rgba(0,119,204,0.18);
+  --hub:#E8003D;--router:#5A8A6A;--device:#5A7FA8;
+  --yes-bg:#EAF7EE;--yes-b:#5A9A6A;--yes-t:#1A5A2A;
+  --warn-bg:#FFF8E8;--warn-b:#D4960A;--warn-t:#6A4800;
+  --text-dark:#141E30;--text-mid:#3A4A60;--text-light:#6A7A90;
+  --border:#C0D0E0;--shadow:rgba(20,40,80,0.10);
+  --gold:#B8860B;--gold-bg:#FFFBF0;--gold-b:#D4B030;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-dark);overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,rgba(0,119,204,0.07) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0;}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+
+.wrapper{position:relative;z-index:1;max-width:820px;margin:0 auto;padding:30px 16px 52px;}
+
+/* HEADER */
+.hdr{text-align:center;margin-bottom:24px;animation:fadeDown .6s ease both;}
+.brand{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--electric);margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:10px;}
+.brand::before,.brand::after{content:'';width:28px;height:1px;background:var(--electric);opacity:.4;}
+.ttl{font-family:'Syne',sans-serif;font-size:clamp(24px,4.5vw,38px);font-weight:800;line-height:1.1;color:var(--text-dark);margin-bottom:8px;}
+.ttl span{color:var(--electric);}
+.sub{font-size:15.5px;color:var(--text-mid);max-width:520px;margin:0 auto;line-height:1.55;}
+
+/* PROGRESS */
+.prog-wrap{margin-bottom:20px;animation:fadeDown .6s .1s ease both;}
+.prog-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+.prog-label{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--text-light);}
+.prog-count{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--electric);}
+.prog-track{height:4px;background:var(--border);border-radius:4px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--electric),#00BBDD);border-radius:4px;transition:width .5s cubic-bezier(.4,0,.2,1);}
+
+/* CARD */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:28px 30px 24px;box-shadow:0 4px 24px var(--shadow);animation:slideUp .4s cubic-bezier(.4,0,.2,1) both;}
+.eyebrow{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--electric);margin-bottom:8px;}
+.question{font-family:'Syne',sans-serif;font-size:clamp(17px,2.8vw,22px);font-weight:700;color:var(--text-dark);margin-bottom:6px;line-height:1.3;}
+.q-hint{font-size:14px;color:var(--text-light);margin-bottom:20px;line-height:1.5;}
+
+/* OPTIONS */
+.opts{display:grid;gap:10px;}
+.cols2{grid-template-columns:1fr 1fr;}
+@media(max-width:500px){.cols2{grid-template-columns:1fr;}}
+.opt{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:var(--bg-card2);border:1.5px solid var(--border);border-radius:11px;cursor:pointer;transition:all .18s;text-align:left;font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:500;color:var(--text-dark);line-height:1.35;width:100%;}
+.opt:hover{border-color:var(--electric);background:var(--el-light);transform:translateY(-1px);box-shadow:0 3px 12px rgba(0,119,204,.12);}
+.opt.sel{border-color:var(--electric);background:var(--el-light);box-shadow:0 0 0 1px var(--electric);}
+.opt-em{font-size:22px;flex-shrink:0;margin-top:1px;}
+.opt-txt{flex:1;}
+.opt-sub{font-size:12.5px;color:var(--text-light);display:block;margin-top:2px;font-weight:400;}
+.opt-price{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--electric);margin-left:auto;flex-shrink:0;padding-left:8px;white-space:nowrap;}
+.opt-check{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .18s;margin-top:3px;}
+.opt.sel .opt-check{background:var(--electric);border-color:var(--electric);}
+.opt.sel .opt-check::after{content:'✓';font-size:10px;color:#fff;font-weight:700;}
+
+/* NAV */
+.nav{display:flex;justify-content:space-between;align-items:center;margin-top:22px;}
+.btn-back{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--text-light);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;transition:color .18s;padding:8px 0;}
+.btn-back:hover{color:var(--text-dark);}
+.btn-next{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--electric),#00AADE);border:none;border-radius:10px;padding:13px 32px;cursor:pointer;transition:all .18s;box-shadow:0 3px 14px rgba(0,119,204,.28);display:flex;align-items:center;gap:7px;}
+.btn-next:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 5px 20px rgba(0,119,204,.38);}
+.btn-next:disabled{opacity:.3;cursor:not-allowed;}
+
+/* RESULT */
+.result-wrap{animation:popIn .45s cubic-bezier(.4,0,.2,1) both;}
+
+/* BUDGET HEADER */
+.budget-header{background:linear-gradient(135deg,var(--electric),#0055AA);border-radius:18px;padding:26px 28px;color:#fff;margin-bottom:16px;box-shadow:0 6px 28px rgba(0,119,204,.3);}
+.budget-tag{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;opacity:.75;margin-bottom:8px;}
+.budget-title{font-family:'Syne',sans-serif;font-size:clamp(20px,3.5vw,28px);font-weight:800;line-height:1.15;margin-bottom:6px;}
+.budget-sub{font-size:14px;opacity:.8;line-height:1.5;}
+.budget-range{font-family:'Syne',sans-serif;font-size:clamp(28px,5vw,42px);font-weight:800;margin-top:14px;letter-spacing:-.02em;}
+.budget-range-sub{font-size:13px;opacity:.7;margin-top:4px;}
+
+/* HONEST ADVICE */
+.honest-box{background:var(--gold-bg);border:1.5px solid var(--gold-b);border-radius:14px;padding:18px 20px;margin-bottom:16px;display:flex;gap:14px;align-items:flex-start;}
+.honest-icon{font-size:22px;flex-shrink:0;}
+.honest-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+.honest-body{font-size:14.5px;color:#5A4000;line-height:1.7;}
+.honest-body strong{font-weight:600;}
+
+/* THREE COLUMNS */
+.three-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+@media(max-width:640px){.three-cols{grid-template-columns:1fr;}}
+.col-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 3px 16px var(--shadow);}
+.col-head{padding:14px 16px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;}
+.col-head.blue{background:var(--electric);}
+.col-head.green{background:var(--router);}
+.col-head.amber{background:#C07800;}
+.col-body{padding:14px 16px;}
+
+/* BUDGET LINE ITEMS */
+.line-items{display:grid;gap:0;}
+.line-item{padding:10px 0;border-bottom:1px solid var(--border);}
+.line-item:last-child{border-bottom:none;}
+.line-cat{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-light);margin-bottom:4px;}
+.line-name{font-size:13.5px;font-weight:500;color:var(--text-dark);margin-bottom:3px;}
+.line-price{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--electric);}
+.line-link{font-size:12px;color:var(--electric);text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-top:3px;opacity:.8;transition:opacity .15s;}
+.line-link:hover{opacity:1;}
+.line-total{padding:10px 0 0;border-top:2px solid var(--electric);margin-top:4px;}
+.line-total-label{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-light);}
+.line-total-val{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--electric);}
+.line-remaining{font-size:13px;color:var(--router);font-weight:600;margin-top:4px;}
+
+/* WHAT YOU GET */
+.what-body{font-size:13.5px;color:var(--text-mid);line-height:1.7;}
+.what-body strong{color:var(--text-dark);font-weight:600;}
+.capability-list{list-style:none;display:grid;gap:6px;margin-top:10px;}
+.capability-list li{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--text-mid);line-height:1.5;}
+.cap-tick{color:var(--router);font-weight:700;flex-shrink:0;}
+
+/* EXPANSION PHASES */
+.phase-list{display:grid;gap:8px;}
+.phase-item{background:var(--bg-card2);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;}
+.phase-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;gap:8px;}
+.phase-label{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text-dark);}
+.phase-cost{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--electric);flex-shrink:0;}
+.phase-desc{font-size:13px;color:var(--text-mid);line-height:1.55;}
+.phase-unlock{font-size:12px;color:var(--router);font-weight:600;margin-top:4px;}
+
+/* DISCLAIMER */
+.disclaimer{background:var(--bg-card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-top:16px;font-size:13px;color:var(--text-light);line-height:1.6;display:flex;gap:10px;align-items:flex-start;}
+.disclaimer-icon{flex-shrink:0;font-size:16px;}
+
+/* RESTART */
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
+.btn-restart{flex:1;font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--text-mid);background:none;border:1.5px solid var(--border);border-radius:10px;padding:11px 18px;cursor:pointer;transition:all .18s;text-align:center;min-width:140px;}
+.btn-restart:hover{border-color:var(--electric);color:var(--electric);}
+
+.tool-footer{text-align:center;margin-top:18px;font-size:12px;color:var(--text-light);}
+.tool-footer a{color:var(--electric);text-decoration:none;}
+
+@media(max-width:580px){.card{padding:20px 16px 18px;}.wrapper{padding:20px 12px 40px;}}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<div class="hdr">
+  <div class="brand">zigbee.com.au</div>
+  <h1 class="ttl">Smart Home<br><span>Budget Calculator</span></h1>
+  <p class="sub">Tell us your budget, tech level and first priority — we'll show you exactly what you get, what it costs, and how to expand smartly over time.</p>
+</div>
+
+<div class="prog-wrap" id="progWrap">
+  <div class="prog-meta">
+    <span class="prog-label" id="progLabel">Your Budget</span>
+    <span class="prog-count" id="progCount">Question 1 of 3</span>
+  </div>
+  <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+</div>
+
+<div id="main"></div>
+
+<div class="tool-footer">Prices shown in USD and are approximate — click any link to check the current price. Built by <a href="https://zigbee.com.au">zigbee.com.au</a>.</div>
+</div>
+
+<script>
+// ── STATE ──
+const S={budget:null,tech:null,priority:null};
+
+// ── DATA ──
+const BUDGETS={
+  u100: {label:'Under $100',  range:'Under $100',   min:0,   max:100},
+  u200: {label:'$100–$200',   range:'$100 – $200',  min:100, max:200},
+  u400: {label:'$200–$400',   range:'$200 – $400',  min:200, max:400},
+  u700: {label:'$400–$700',   range:'$400 – $700',  min:400, max:700},
+  u700p:{label:'$700+',       range:'$700+',        min:700, max:1200},
+};
+
+const TECHS={
+  beginner:{label:'Keep it simple',        em:'😊', sub:'App-based hubs, plug-and-play devices'},
+  mid:     {label:'Happy to follow guides',em:'📖', sub:'Local hubs, some configuration'},
+  tinkerer:{label:'I love tinkering',      em:'🔧', sub:'Home Assistant, Zigbee2MQTT, full control'},
+};
+
+const PRIORITIES={
+  security:  {em:'🔒',label:'Security first',    sub:'Door sensors, motion, alerts'},
+  lighting:  {em:'💡',label:'Lighting first',     sub:'Smart bulbs, switches, ambience'},
+  energy:    {em:'🔌',label:'Energy first',       sub:'Power monitoring, smart plugs'},
+  climate:   {em:'🌡️',label:'Environment first', sub:'Temperature, humidity, climate'},
+  foundation:{em:'🏗️',label:'Foundation first',  sub:'Hub and mesh backbone, then decide'},
+};
+
+// ── HUB RECOMMENDATIONS BY TECH ──
+const HUBS={
+  beginner:{
+    u100: {name:'Amazon Echo (4th gen)',       price:'~$60–$100',  note:'Already a Zigbee coordinator — check if you own one first', url:'https://amzn.to/placeholder'},
+    u200: {name:'Amazon Echo (4th gen)',       price:'~$60–$100',  note:'Best beginner coordinator — voice control built in', url:'https://amzn.to/placeholder'},
+    u400: {name:'Aqara Hub M2',               price:'~$59–$69',   note:'Local processing, works with Apple Home, Alexa & Google', url:'https://amzn.to/placeholder'},
+    u700: {name:'Aqara Hub M2',               price:'~$59–$69',   note:'Local processing, works with Apple Home, Alexa & Google', url:'https://amzn.to/placeholder'},
+    u700p:{name:'Aqara Hub M2',               price:'~$59–$69',   note:'Local processing, works with Apple Home, Alexa & Google', url:'https://amzn.to/placeholder'},
+  },
+  mid:{
+    u100: {name:'Amazon Echo (4th gen)',       price:'~$60–$100',  note:'Best value at this budget — check if you own one first', url:'https://amzn.to/placeholder'},
+    u200: {name:'Aqara Hub M2',               price:'~$59–$69',   note:'Local hub, great app, Apple Home + Alexa + Google', url:'https://amzn.to/placeholder'},
+    u400: {name:'Aqara Hub M2',               price:'~$59–$69',   note:'Leaves more budget for devices at this price point', url:'https://amzn.to/placeholder'},
+    u700: {name:'Sonoff iHost',               price:'~$99–$119',  note:'Fully local, no cloud, excellent mid-tier platform', url:'https://amzn.to/placeholder'},
+    u700p:{name:'Sonoff iHost',               price:'~$99–$119',  note:'Fully local, no cloud, excellent mid-tier platform', url:'https://amzn.to/placeholder'},
+  },
+  tinkerer:{
+    u100: {name:'Sonoff ZBDongle-E',          price:'~$18–$25',   note:'Pair with a spare computer or Raspberry Pi you already own', url:'https://amzn.to/placeholder'},
+    u200: {name:'Sonoff ZBDongle-E + Pi Zero',price:'~$18–$45',   note:'ZBDongle-E + Raspberry Pi Zero 2W — minimal but capable', url:'https://amzn.to/placeholder'},
+    u400: {name:'HA Green + ZBDongle-E',      price:'~$117–$154', note:'Plug-and-play Home Assistant — best tinkerer starting point', url:'https://amzn.to/placeholder'},
+    u700: {name:'HA Green + ZBDongle-E',      price:'~$117–$154', note:'Plug-and-play Home Assistant with full Zigbee2MQTT support', url:'https://amzn.to/placeholder'},
+    u700p:{name:'HA Yellow',                  price:'~$99–$129',  note:'Built-in Zigbee radio — the cleanest tinkerer setup available', url:'https://amzn.to/placeholder'},
+  },
+};
+
+// ── ROUTER RECOMMENDATIONS ──
+const ROUTERS={
+  beginner:{name:'IKEA TRÅDFRI Smart Plug',   price:'~$12–$20 each', url:'https://amzn.to/placeholder', qty:'2'},
+  mid:     {name:'IKEA TRÅDFRI Smart Plug',   price:'~$12–$20 each', url:'https://amzn.to/placeholder', qty:'2'},
+  tinkerer:{name:'Sonoff S40 Lite Zigbee Plug',price:'~$12–$18 each',url:'https://amzn.to/placeholder', qty:'2'},
+};
+
+// ── PRIORITY DEVICE PACKS ──
+// Each entry: [{name, price, qty, url, note}]
+const PRIORITY_PACKS={
+  security:{
+    beginner:[
+      {name:'Aqara Door & Window Sensor',   price:'~$15–$22 each', qty:2, url:'https://amzn.to/placeholder', note:'Simple pairing, works with Alexa & Google'},
+      {name:'Aqara Motion Sensor',          price:'~$18–$28',      qty:1, url:'https://amzn.to/placeholder', note:'Pet-immune motion detection'},
+    ],
+    mid:[
+      {name:'Sonoff SNZB-04 Door Sensor',   price:'~$10–$15 each', qty:2, url:'https://amzn.to/placeholder', note:'Affordable and reliable'},
+      {name:'Sonoff SNZB-03 Motion Sensor', price:'~$12–$18',      qty:1, url:'https://amzn.to/placeholder', note:'Wide angle detection'},
+      {name:'Aqara Water Leak Sensor',      price:'~$15–$20',      qty:1, url:'https://amzn.to/placeholder', note:'Under sink or near washing machine'},
+    ],
+    tinkerer:[
+      {name:'Sonoff SNZB-04 Door Sensor',   price:'~$10–$15 each', qty:3, url:'https://amzn.to/placeholder', note:'Best value per sensor'},
+      {name:'Aqara Presence Sensor FP2',    price:'~$55–$70',      qty:1, url:'https://amzn.to/placeholder', note:'True presence detection — not just motion'},
+    ],
+  },
+  lighting:{
+    beginner:[
+      {name:'Philips Hue White Bulb',       price:'~$25 each',     qty:2, url:'https://amzn.to/placeholder', note:'Most beginner-friendly — app is excellent'},
+      {name:'IKEA TRÅDFRI Bulb',            price:'~$10–$18 each', qty:2, url:'https://amzn.to/placeholder', note:'Budget-friendly Hue-compatible bulbs'},
+    ],
+    mid:[
+      {name:'IKEA TRÅDFRI Bulb',            price:'~$10–$18 each', qty:4, url:'https://amzn.to/placeholder', note:'Cost-effective across multiple rooms'},
+      {name:'Innr Smart Bulb',              price:'~$15–$22 each', qty:2, url:'https://amzn.to/placeholder', note:'Good Zigbee 3.0 alternative to Hue'},
+    ],
+    tinkerer:[
+      {name:'Philips Hue White Bulb',       price:'~$25 each',     qty:4, url:'https://amzn.to/placeholder', note:'Works perfectly without the Hue Bridge via Z2M'},
+      {name:'Philips Hue Colour Bulb',      price:'~$35–$40 each', qty:2, url:'https://amzn.to/placeholder', note:'Full RGB control via Zigbee2MQTT'},
+    ],
+  },
+  energy:{
+    beginner:[
+      {name:'Sonoff S40 Lite Zigbee Plug',  price:'~$12–$18 each', qty:3, url:'https://amzn.to/placeholder', note:'Power monitoring + smart switching'},
+    ],
+    mid:[
+      {name:'Sonoff S40 Lite Zigbee Plug',  price:'~$12–$18 each', qty:3, url:'https://amzn.to/placeholder', note:'Per-device energy monitoring'},
+      {name:'Aqara Smart Plug',             price:'~$18–$25',      qty:1, url:'https://amzn.to/placeholder', note:'Premium option with cleaner power data'},
+    ],
+    tinkerer:[
+      {name:'Sonoff S40 Lite Zigbee Plug',  price:'~$12–$18 each', qty:4, url:'https://amzn.to/placeholder', note:'Feed data into HA Energy Dashboard'},
+      {name:'Sonoff ZBMINIL2',              price:'~$15–$22',      qty:1, url:'https://amzn.to/placeholder', note:'In-wall monitoring without replacing the socket'},
+    ],
+  },
+  climate:{
+    beginner:[
+      {name:'Sonoff SNZB-02 Temp Sensor',   price:'~$10–$15 each', qty:3, url:'https://amzn.to/placeholder', note:'Room-by-room temperature visibility'},
+    ],
+    mid:[
+      {name:'Sonoff SNZB-02 Temp Sensor',   price:'~$10–$15 each', qty:3, url:'https://amzn.to/placeholder', note:'Affordable per-room sensors'},
+      {name:'Aqara TVOC Air Quality Sensor', price:'~$30–$45',     qty:1, url:'https://amzn.to/placeholder', note:'CO2, TVOC, temp and humidity in one'},
+    ],
+    tinkerer:[
+      {name:'Aqara TVOC Air Quality Sensor', price:'~$30–$45',     qty:2, url:'https://amzn.to/placeholder', note:'Full air quality dashboard in Home Assistant'},
+      {name:'Sonoff SNZB-02 Temp Sensor',   price:'~$10–$15 each', qty:4, url:'https://amzn.to/placeholder', note:'Room-by-room data for climate automations'},
+    ],
+  },
+  foundation:{
+    beginner:[
+      {name:'Sonoff SNZB-04 Door Sensor',   price:'~$10–$15',      qty:1, url:'https://amzn.to/placeholder', note:'One device to test the network'},
+      {name:'Sonoff SNZB-02 Temp Sensor',   price:'~$10–$15',      qty:1, url:'https://amzn.to/placeholder', note:'Confirms your mesh is working'},
+    ],
+    mid:[
+      {name:'Sonoff SNZB-04 Door Sensor',   price:'~$10–$15 each', qty:2, url:'https://amzn.to/placeholder', note:'Test devices to validate the mesh'},
+      {name:'Sonoff SNZB-02 Temp Sensor',   price:'~$10–$15',      qty:1, url:'https://amzn.to/placeholder', note:'Confirms sensor data is flowing correctly'},
+    ],
+    tinkerer:[
+      {name:'Sonoff SNZB-04 Door Sensor',   price:'~$10–$15 each', qty:2, url:'https://amzn.to/placeholder', note:'Test devices while you configure Zigbee2MQTT'},
+      {name:'Sonoff SNZB-02 Temp Sensor',   price:'~$10–$15',      qty:1, url:'https://amzn.to/placeholder', note:'Validate the mesh before adding more devices'},
+    ],
+  },
+};
+
+// ── HONEST ADVICE BY BUDGET ──
+const HONEST={
+  u100:`<strong>Before you buy anything:</strong> check whether you already own an Amazon Echo (4th gen, Plus, or Studio) — if you do, you already have a Zigbee hub. Spend your budget entirely on 2–3 sensors rather than a new hub. If you don't own an Echo, this budget is tight but workable — prioritise the hub first and add devices with your next $50.`,
+  u200:`<strong>The biggest $100–$200 mistake</strong> is buying too many end devices before building a mesh backbone. Spend 50–60% on your hub and two router plugs first — then use the rest on your priority devices. A thin network with too many sensors and no routers is the number one cause of beginner frustration.`,
+  u400:`<strong>This is the sweet spot.</strong> $200–$400 is enough to do it properly — local hub, mesh backbone, and enough priority devices to be genuinely useful — without overspending on things you might change your mind about. Build the foundation first, deploy your priority devices, and let the network settle for 2 weeks before expanding further.`,
+  u700:`<strong>At this budget, the temptation is to buy everything at once.</strong> Resist it. Your understanding of what you actually want will change significantly after using Zigbee for 4–6 weeks. Buy in phases — deploy phase 1, live with it, then spend the remainder on what you discover you actually need.`,
+  u700p:`<strong>At $700+ the biggest risk is the wrong hub.</strong> If you're not already on Home Assistant, now is the time — migrating later costs time and sometimes money. Invest in the right platform now, plan your mesh carefully using our Mesh Estimator, and build in deliberate phases rather than all at once.`,
+};
+
+// ── WHAT YOU GET DESCRIPTIONS ──
+function getWhatYouGet(budget,tech,priority){
+  const descriptions={
+    u100:{
+      beginner:`A working starter network centred on your Amazon Echo. Two router plugs build a basic mesh backbone, and your priority devices give you immediate real-world value. This covers a 1–2 room apartment comfortably.`,
+      mid:`A compact but functional local network with an Aqara hub or Echo as coordinator. The focus at this budget is getting the foundation right — hub plus routers — with a minimal set of priority devices to validate everything works.`,
+      tinkerer:`A barebones Home Assistant setup using a ZBDongle-E on hardware you already own. Your budget goes entirely on the coordinator and a few test devices — this is about getting Zigbee2MQTT configured correctly before spending on more hardware.`,
+    },
+    u200:{
+      beginner:`A proper beginner network — hub, two routers, and a solid set of priority devices covering your most important use case. Enough to see real value immediately without overcomplicating things.`,
+      mid:`A local hub with a small mesh backbone and meaningful device coverage for your priority area. This setup will serve a 2–3 room apartment or a single floor of a house reliably.`,
+      tinkerer:`A functional Home Assistant setup with ZBDongle-E, covering your priority use case with room to expand. Zigbee2MQTT gives you visibility into every device and the flexibility to add anything Zigbee in future.`,
+    },
+    u400:{
+      beginner:`A complete beginner smart home — local hub, solid mesh backbone across multiple rooms, and good coverage of your priority use case. This handles a 3–4 bedroom house comfortably and leaves budget for Phase 2 expansion.`,
+      mid:`A well-planned mid-tier network with a local hub, multi-room mesh coverage, and strong priority device deployment. The remaining budget gives you a meaningful Phase 2 immediately.`,
+      tinkerer:`A capable Home Assistant setup with ZBDongle-E, covering your priority use case across multiple rooms with Zigbee2MQTT. This is where tinkering gets genuinely rewarding — enough devices to build meaningful automations.`,
+    },
+    u700:{
+      beginner:`A comprehensive smart home covering your priority area plus meaningful expansion into secondary use cases. Multiple rooms covered, solid mesh backbone, and real automation potential even on a beginner hub.`,
+      mid:`A serious mid-tier network — local hub, strong mesh across the whole home, and deep coverage of your priority area. Enough devices to build automations that actually change how you use your home.`,
+      tinkerer:`A full Home Assistant deployment with Zigbee2MQTT, strong mesh backbone, and comprehensive priority coverage. At this level you have enough device diversity to build genuinely useful automations and a proper energy dashboard.`,
+    },
+    u700p:{
+      beginner:`A complete smart home deployment. Your priority area is thoroughly covered, your mesh is strong across the whole home, and you have the foundation for every other use case when you're ready.`,
+      mid:`A comprehensive mid-tier deployment with full home coverage. Your priority area is deeply covered, your mesh is solid, and the remaining budget funds meaningful secondary expansion.`,
+      tinkerer:`A flagship Home Assistant deployment — HA Yellow with built-in Zigbee, full Zigbee2MQTT integration, comprehensive priority coverage, and enough budget to build a genuinely automated home.`,
+    },
+  };
+  return descriptions[budget][tech];
+}
+
+// ── CAPABILITIES BY COMBINATION ──
+function getCapabilities(budget,tech,priority){
+  const base=[
+    'Working Zigbee coordinator — your network hub',
+    'Mesh backbone — 2 router devices for reliable signal',
+  ];
+  const priorityCaps={
+    security:['Door/window monitoring with alerts','Motion detection coverage','Network visible in your hub app'],
+    lighting:['Smart lighting control in key rooms','Schedule and scene capability','Voice control via Alexa/Google (beginner & mid)'],
+    energy:['Per-device power monitoring','Track energy usage by appliance','Smart switching with scheduling'],
+    climate:['Room-by-room temperature monitoring','Humidity tracking','Data visible in your hub dashboard'],
+    foundation:['Validated mesh topology','Test devices to confirm signal coverage','Ready to add any device category next'],
+  };
+  const techCaps={
+    beginner:['App-based control — no command line needed','Works with Alexa and/or Google Home'],
+    mid:['Local processing — works without internet','Full automation capability in hub app'],
+    tinkerer:['Zigbee2MQTT — widest device compatibility of any platform','Home Assistant automations and energy dashboard','Full network topology map and diagnostics'],
+  };
+  return [...base,...(priorityCaps[priority]||[]),...(techCaps[tech]||[])];
+}
+
+// ── EXPANSION PHASES ──
+function getExpansionPhases(budget,tech,priority){
+  const allPhases={
+    beginner:{
+      security:[
+        {phase:'Phase 2',cost:'~$40–$60',label:'More sensors',desc:'Add 2 more door sensors and a second motion sensor — cover the rest of your home perimeter.',unlock:'Full perimeter awareness'},
+        {phase:'Phase 3',cost:'~$60–$100',label:'Add lighting',desc:'Add 2–4 smart bulbs (IKEA TRÅDFRI or Innr) — compatible with your existing hub.',unlock:'Light + security automations'},
+        {phase:'Phase 4',cost:'~$50–$80',label:'Energy monitoring',desc:'Add 2–3 smart plugs with power monitoring to track your biggest appliances.',unlock:'Energy visibility'},
+        {phase:'Phase 5',cost:'~$80–$120',label:'Expand the mesh',desc:'Add more router plugs as you add more devices — aim for 1 router per 6 devices.',unlock:'Whole-home reliability'},
+      ],
+      lighting:[
+        {phase:'Phase 2',cost:'~$40–$80',label:'More rooms',desc:'Add 2–4 bulbs to extend lighting to a second room. IKEA TRÅDFRI bulbs work with your existing hub.',unlock:'Multi-room lighting'},
+        {phase:'Phase 3',cost:'~$40–$60',label:'Add security',desc:'Add 2 door sensors and 1 motion sensor — your hub handles both lighting and security.',unlock:'Light + security automations'},
+        {phase:'Phase 4',cost:'~$50–$80',label:'Energy monitoring',desc:'Add smart plugs with power monitoring — they also double as router devices.',unlock:'Energy visibility + stronger mesh'},
+        {phase:'Phase 5',cost:'~$60–$100',label:'Smart switches',desc:'Replace wall switches with smart switches to keep bulbs always powered.',unlock:'True smart lighting (no more wall switch issues)'},
+      ],
+      energy:[
+        {phase:'Phase 2',cost:'~$30–$50',label:'More plugs',desc:'Add 2–3 more smart plugs to monitor additional appliances.',unlock:'Full energy picture'},
+        {phase:'Phase 3',cost:'~$40–$60',label:'Add security',desc:'Add door and motion sensors — your plugs already act as mesh routers.',unlock:'Security awareness'},
+        {phase:'Phase 4',cost:'~$40–$80',label:'Add lighting',desc:'Add smart bulbs — your existing mesh handles them easily.',unlock:'Lighting automation'},
+        {phase:'Phase 5',cost:'~$50–$80',label:'Climate sensors',desc:'Add temperature sensors to correlate energy use with climate data.',unlock:'Climate-aware automations'},
+      ],
+      climate:[
+        {phase:'Phase 2',cost:'~$30–$50',label:'More sensors',desc:'Add sensors to every main room — kitchen, bedroom, living area.',unlock:'Whole-home climate picture'},
+        {phase:'Phase 3',cost:'~$40–$80',label:'Add smart plugs',desc:'Smart plugs on fans and portable heaters — control based on temperature readings.',unlock:'Climate control automations'},
+        {phase:'Phase 4',cost:'~$40–$60',label:'Add security',desc:'Add door and motion sensors — temperature context improves security automations.',unlock:'Integrated home awareness'},
+        {phase:'Phase 5',cost:'~$60–$100',label:'Add lighting',desc:'Smart lighting to complement your climate automations.',unlock:'Full home automation'},
+      ],
+      foundation:[
+        {phase:'Phase 2',cost:'~$40–$60',label:'Choose your first use case',desc:'Now that your foundation is solid, pick one priority area — security, lighting, or energy — and add 3–4 devices.',unlock:'First real-world value'},
+        {phase:'Phase 3',cost:'~$60–$100',label:'Expand your priority',desc:'Double down on what works — more sensors or bulbs in your chosen category.',unlock:'Meaningful coverage'},
+        {phase:'Phase 4',cost:'~$50–$80',label:'Add a second use case',desc:'With one area working well, add a second — lighting or energy monitoring complement security perfectly.',unlock:'Multi-purpose smart home'},
+        {phase:'Phase 5',cost:'~$80–$120',label:'Whole-home mesh',desc:'Add router plugs as your device count grows — aim for 1 router per 5–6 devices.',unlock:'Reliable whole-home coverage'},
+      ],
+    },
+    mid:{
+      security:[
+        {phase:'Phase 2',cost:'~$50–$80',label:'Deeper security',desc:'Add a water leak sensor under the sink, a vibration sensor on valuables, and a presence sensor for accurate occupancy.',unlock:'Comprehensive security coverage'},
+        {phase:'Phase 3',cost:'~$80–$120',label:'Add lighting automations',desc:'Add smart bulbs or switches — security + lighting automations are the most useful Zigbee combination.',unlock:'Light-triggered security responses'},
+        {phase:'Phase 4',cost:'~$60–$90',label:'Energy monitoring',desc:'Smart plugs with power monitoring — they also strengthen your mesh.',unlock:'Energy visibility + stronger mesh'},
+        {phase:'Phase 5',cost:'~$50–$80',label:'Climate sensors',desc:'Room-by-room temperature and humidity monitoring.',unlock:'Whole-home environmental awareness'},
+      ],
+      lighting:[
+        {phase:'Phase 2',cost:'~$60–$100',label:'More rooms + switches',desc:'Extend lighting to all main rooms. Consider smart switches to keep bulbs always powered.',unlock:'Whole-home lighting'},
+        {phase:'Phase 3',cost:'~$50–$70',label:'Add motion-triggered lighting',desc:'Add motion sensors — lights that respond to presence are genuinely useful daily.',unlock:'Presence-based automation'},
+        {phase:'Phase 4',cost:'~$60–$90',label:'Add security',desc:'Door sensors + motion sensors — your lighting mesh already supports them.',unlock:'Integrated security + lighting'},
+        {phase:'Phase 5',cost:'~$60–$80',label:'Energy monitoring',desc:'Power monitoring plugs round out the network.',unlock:'Full energy visibility'},
+      ],
+      energy:[
+        {phase:'Phase 2',cost:'~$50–$80',label:'Whole-home monitoring',desc:'Add plugs to every major appliance — dishwasher, dryer, EV charger if applicable.',unlock:'Complete energy picture'},
+        {phase:'Phase 3',cost:'~$60–$90',label:'In-wall monitoring',desc:'Add Sonoff ZBMINIL2 to monitor hardwired circuits without replacing switchboards.',unlock:'Circuit-level energy data'},
+        {phase:'Phase 4',cost:'~$50–$70',label:'Climate correlation',desc:'Add temperature sensors — correlate heating/cooling energy with climate data.',unlock:'Climate-energy automations'},
+        {phase:'Phase 5',cost:'~$60–$100',label:'Add security',desc:'Round out the network with door and motion sensors.',unlock:'Integrated home awareness'},
+      ],
+      climate:[
+        {phase:'Phase 2',cost:'~$50–$80',label:'Every room covered',desc:'Add temperature and air quality sensors to every main room.',unlock:'Room-by-room climate dashboard'},
+        {phase:'Phase 3',cost:'~$70–$100',label:'Climate control',desc:'Add smart plugs on fans and portable heaters — automate based on temperature.',unlock:'Automated climate responses'},
+        {phase:'Phase 4',cost:'~$60–$90',label:'Add lighting',desc:'Smart lighting that responds to time-of-day and presence.',unlock:'Integrated comfort automation'},
+        {phase:'Phase 5',cost:'~$50–$80',label:'Add security',desc:'Door and motion sensors to complete the picture.',unlock:'Full home awareness'},
+      ],
+      foundation:[
+        {phase:'Phase 2',cost:'~$60–$90',label:'Deploy your first use case',desc:'Your foundation is solid — now commit to one priority area and add 4–6 devices.',unlock:'First meaningful automation'},
+        {phase:'Phase 3',cost:'~$80–$120',label:'Build automations',desc:'With devices in place, start building automations in your hub app.',unlock:'Smart home that responds to you'},
+        {phase:'Phase 4',cost:'~$70–$100',label:'Second use case',desc:'Add a second device category — the mesh handles mixed device types easily.',unlock:'Multi-purpose network'},
+        {phase:'Phase 5',cost:'~$80–$120',label:'Whole-home coverage',desc:'Extend coverage to every room, add routers as needed.',unlock:'Comprehensive smart home'},
+      ],
+    },
+    tinkerer:{
+      security:[
+        {phase:'Phase 2',cost:'~$60–$90',label:'Advanced presence detection',desc:'Add Aqara FP2 presence sensors — real occupancy detection, not just motion. Configure in HA.',unlock:'True presence-based automations'},
+        {phase:'Phase 3',cost:'~$80–$120',label:'Lighting integration',desc:'Add Philips Hue bulbs (no bridge needed via Z2M) — build security + lighting automations.',unlock:'Light-triggered security responses'},
+        {phase:'Phase 4',cost:'~$60–$80',label:'Energy monitoring',desc:'Add power monitoring plugs and configure the HA Energy Dashboard.',unlock:'Full energy visibility in Home Assistant'},
+        {phase:'Phase 5',cost:'~$100–$150',label:'External integrations',desc:'Connect your Zigbee network to weather APIs, calendar presence, and notification services.',unlock:'Context-aware whole-home automation'},
+      ],
+      lighting:[
+        {phase:'Phase 2',cost:'~$80–$120',label:'Full home lighting',desc:'Extend to all rooms with Philips Hue or IKEA bulbs via Z2M. No Hue Bridge needed.',unlock:'Whole-home lighting in Home Assistant'},
+        {phase:'Phase 3',cost:'~$70–$100',label:'Presence-based scenes',desc:'Add FP2 presence sensors — lights that respond to real occupancy, not just motion.',unlock:'Intelligent scene automation'},
+        {phase:'Phase 4',cost:'~$60–$80',label:'Circadian rhythm lighting',desc:'Configure HA\'s adaptive lighting integration — colour temperature follows the sun all day.',unlock:'Health-optimised lighting automation'},
+        {phase:'Phase 5',cost:'~$80–$120',label:'Smart switches',desc:'Replace wall switches with Zigbee smart switches — keep bulbs always powered.',unlock:'Seamless physical + app control'},
+      ],
+      energy:[
+        {phase:'Phase 2',cost:'~$70–$100',label:'HA Energy Dashboard',desc:'Add more S40 plugs and configure the full HA Energy Dashboard for whole-home visibility.',unlock:'Professional-grade energy monitoring'},
+        {phase:'Phase 3',cost:'~$80–$120',label:'In-wall and circuit monitoring',desc:'Add ZBMINIL2 units to hardwired circuits. Consider a whole-home energy monitor integration.',unlock:'Circuit-level energy data'},
+        {phase:'Phase 4',cost:'~$60–$90',label:'Solar and grid integration',desc:'If you have solar, integrate your inverter with HA alongside your Zigbee energy data.',unlock:'Grid + solar + home consumption in one view'},
+        {phase:'Phase 5',cost:'~$70–$100',label:'Climate correlation',desc:'Add air quality sensors and correlate with HVAC energy consumption.',unlock:'Climate-energy optimisation automations'},
+      ],
+      climate:[
+        {phase:'Phase 2',cost:'~$80–$120',label:'Whole-home air quality',desc:'Add TVOC sensors to every main room — build an air quality dashboard in HA.',unlock:'Comprehensive environmental monitoring'},
+        {phase:'Phase 3',cost:'~$80–$100',label:'HVAC integration',desc:'Research your specific AC/heat pump brand\'s HA integration — control climate from automations.',unlock:'Automated climate control'},
+        {phase:'Phase 4',cost:'~$70–$100',label:'Presence-based climate',desc:'Add FP2 presence sensors — heat only occupied rooms.',unlock:'Efficient presence-based climate'},
+        {phase:'Phase 5',cost:'~$80–$120',label:'Energy correlation',desc:'Add power monitoring to climate appliances — see exactly what your comfort costs.',unlock:'Climate efficiency dashboard'},
+      ],
+      foundation:[
+        {phase:'Phase 2',cost:'~$80–$120',label:'Configure Zigbee2MQTT fully',desc:'Map your network, optimise your channel, and add your first real use case devices.',unlock:'Validated, optimised Zigbee foundation'},
+        {phase:'Phase 3',cost:'~$80–$120',label:'Deploy your priority use case',desc:'Now that Z2M is configured, deploy your first full device category.',unlock:'First meaningful HA automations'},
+        {phase:'Phase 4',cost:'~$100–$150',label:'Build automations',desc:'With devices and data flowing, build the automations that make Home Assistant genuinely powerful.',unlock:'A home that responds intelligently'},
+        {phase:'Phase 5',cost:'~$100–$150',label:'External integrations',desc:'Connect weather, presence, calendars and notifications to your Zigbee automations.',unlock:'Context-aware whole-home intelligence'},
+      ],
+    },
+  };
+  return allPhases[tech][priority]||[];
+}
+
+// ── BUDGET CALCULATIONS ──
+function calcBudget(budget,tech,priority){
+  const hub=HUBS[tech][budget];
+  const router=ROUTERS[tech];
+  const devices=PRIORITY_PACKS[priority][tech];
+
+  // Hub cost estimate
+  const hubParts=hub.price.replace(/[~$]/g,'').split('–');
+  const hubMin=parseInt(hubParts[0]);
+  const hubMax=parseInt(hubParts[hubParts.length-1]);
+
+  // Router cost
+  const rParts=router.price.replace(/[~$]/g,'').split('–');
+  const rMin=parseInt(rParts[0])*2;
+  const rMax=parseInt(rParts[rParts.length-1].split(' ')[0])*2;
+
+  // Device costs
+  let devMin=0,devMax=0;
+  devices.forEach(d=>{
+    const parts=d.price.replace(/[~$]/g,'').split('–');
+    const dMin=parseInt(parts[0]);
+    const dMax=parseInt(parts[parts.length-1].replace(/[^0-9]/g,''));
+    devMin+=dMin*(d.qty||1);
+    devMax+=dMax*(d.qty||1);
+  });
+
+  const totalMin=hubMin+rMin+devMin;
+  const totalMax=hubMax+rMax+devMax;
+  const budgetObj=BUDGETS[budget];
+  const remainMin=Math.max(0,budgetObj.min-totalMin);
+  const remainMax=Math.max(0,budgetObj.max-totalMax);
+
+  return {hub,router,devices,hubMin,hubMax,rMin,rMax,devMin,devMax,totalMin,totalMax,remainMin,remainMax};
+}
+
+// ── PROGRESS ──
+function setProgress(step,label){
+  const pct=[0,33,66,100][step]||0;
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progLabel').textContent=label;
+  document.getElementById('progCount').textContent=step<3?`Question ${step} of 3`:'Your Budget Plan';
+}
+
+// ── Q1: BUDGET ──
+function renderQ1(){
+  setProgress(1,'Your Budget');
+  document.getElementById('main').innerHTML=`
+  <div class="card">
+    <div class="eyebrow">Question 1 of 3</div>
+    <div class="question">What is your starting budget for your Zigbee smart home?</div>
+    <div class="q-hint">This is your total budget for everything — hub, routers and devices. You can always expand later.</div>
+    <div class="opts">
+      ${Object.entries(BUDGETS).map(([k,b])=>`
+        <button class="opt${S.budget===k?' sel':''}" data-val="${k}" onclick="selectBudget('${k}',this)">
+          <span class="opt-em">${k==='u100'?'🌱':k==='u200'?'🏡':k==='u400'?'🏘️':k==='u700'?'🏰':'🌟'}</span>
+          <span class="opt-txt"><strong>${b.label}</strong></span>
+          <span class="opt-check"></span>
+        </button>`).join('')}
+    </div>
+    <div class="nav">
+      <span></span>
+      <button class="btn-next" id="btnN1" onclick="renderQ2()" ${S.budget?'':'disabled'}>Next →</button>
+    </div>
+  </div>`;
+}
+
+function selectBudget(k,btn){
+  S.budget=k;
+  document.querySelectorAll('.opt').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('btnN1').disabled=false;
+}
+
+// ── Q2: TECH ──
+function renderQ2(){
+  setProgress(2,'Your Tech Level');
+  document.getElementById('main').innerHTML=`
+  <div class="card">
+    <div class="eyebrow">Question 2 of 3</div>
+    <div class="question">How would you describe your tech confidence?</div>
+    <div class="q-hint">This shapes which hub and devices we recommend — not your intelligence, just your preference for setup complexity.</div>
+    <div class="opts">
+      ${Object.entries(TECHS).map(([k,t])=>`
+        <button class="opt${S.tech===k?' sel':''}" data-val="${k}" onclick="selectTech('${k}',this)">
+          <span class="opt-em">${t.em}</span>
+          <span class="opt-txt"><strong>${t.label}</strong><span class="opt-sub">${t.sub}</span></span>
+          <span class="opt-check"></span>
+        </button>`).join('')}
+    </div>
+    <div class="nav">
+      <button class="btn-back" onclick="renderQ1()">← Back</button>
+      <button class="btn-next" id="btnN2" onclick="renderQ3()" ${S.tech?'':'disabled'}>Next →</button>
+    </div>
+  </div>`;
+}
+
+function selectTech(k,btn){
+  S.tech=k;
+  document.querySelectorAll('.opt').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('btnN2').disabled=false;
+}
+
+// ── Q3: PRIORITY ──
+function renderQ3(){
+  setProgress(3,'Your First Priority');
+  document.getElementById('main').innerHTML=`
+  <div class="card">
+    <div class="eyebrow">Question 3 of 3</div>
+    <div class="question">What is your first priority — where does your budget go first?</div>
+    <div class="q-hint">Your budget is allocated to this area first. Everything else becomes your expansion plan.</div>
+    <div class="opts">
+      ${Object.entries(PRIORITIES).map(([k,p])=>`
+        <button class="opt${S.priority===k?' sel':''}" data-val="${k}" onclick="selectPriority('${k}',this)">
+          <span class="opt-em">${p.em}</span>
+          <span class="opt-txt"><strong>${p.label}</strong><span class="opt-sub">${p.sub}</span></span>
+          <span class="opt-check"></span>
+        </button>`).join('')}
+    </div>
+    <div class="nav">
+      <button class="btn-back" onclick="renderQ2()">← Back</button>
+      <button class="btn-next" id="btnN3" onclick="renderResult()" ${S.priority?'':'disabled'}>See My Budget Plan →</button>
+    </div>
+  </div>`;
+}
+
+function selectPriority(k,btn){
+  S.priority=k;
+  document.querySelectorAll('.opt').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('btnN3').disabled=false;
+}
+
+// ── RESULT ──
+function renderResult(){
+  setProgress(4,'Your Budget Plan');
+  const calc=calcBudget(S.budget,S.tech,S.priority);
+  const budget=BUDGETS[S.budget];
+  const tech=TECHS[S.tech];
+  const priority=PRIORITIES[S.priority];
+  const phases=getExpansionPhases(S.budget,S.tech,S.priority);
+  const caps=getCapabilities(S.budget,S.tech,S.priority);
+  const whatYouGet=getWhatYouGet(S.budget,S.tech,S.priority);
+
+  document.getElementById('main').innerHTML=`
+  <div class="result-wrap">
+
+    <!-- HEADER -->
+    <div class="budget-header">
+      <div class="budget-tag">Your Zigbee Budget Plan</div>
+      <div class="budget-title">${tech.em} ${tech.label} · ${priority.em} ${priority.label}</div>
+      <div class="budget-sub">Based on a ${budget.range} starting budget</div>
+      <div class="budget-range">~$${calc.totalMin}–$${calc.totalMax}</div>
+      <div class="budget-range-sub">Estimated Phase 1 spend · Prices approximate — check links for current pricing</div>
+    </div>
+
+    <!-- HONEST ADVICE -->
+    <div class="honest-box">
+      <span class="honest-icon">💡</span>
+      <div>
+        <div class="honest-title">Honest money advice</div>
+        <div class="honest-body">${HONEST[S.budget]}</div>
+      </div>
+    </div>
+
+    <!-- THREE COLUMNS -->
+    <div class="three-cols">
+
+      <!-- COL 1: WHAT YOUR BUDGET BUYS -->
+      <div class="col-card">
+        <div class="col-head blue">💰 What to buy first</div>
+        <div class="col-body">
+          <div class="line-items">
+
+            <div class="line-item">
+              <div class="line-cat">🏗️ Hub / Coordinator</div>
+              <div class="line-name">${calc.hub.name}</div>
+              <div class="line-price">${calc.hub.price}</div>
+              <div style="font-size:12px;color:var(--text-light);margin-top:2px;line-height:1.4;">${calc.hub.note}</div>
+              <a class="line-link" href="${calc.hub.url}" target="_blank" rel="noopener sponsored">Check current price →</a>
+            </div>
+
+            <div class="line-item">
+              <div class="line-cat">📶 Router Devices (×${calc.router.qty})</div>
+              <div class="line-name">${calc.router.name}</div>
+              <div class="line-price">${calc.router.price} · ~$${calc.rMin}–$${calc.rMax} total</div>
+              <div style="font-size:12px;color:var(--text-light);margin-top:2px;line-height:1.4;">Build your mesh backbone first — always</div>
+              <a class="line-link" href="${calc.router.url}" target="_blank" rel="noopener sponsored">Check current price →</a>
+            </div>
+
+            <div class="line-item">
+              <div class="line-cat">${priority.em} Priority Devices</div>
+              ${calc.devices.map(d=>`
+                <div style="margin-bottom:8px;">
+                  <div class="line-name">${d.name}${d.qty>1?` ×${d.qty}`:''}</div>
+                  <div class="line-price">${d.price}${d.qty>1?` · ~$${parseInt(d.price.replace(/[^0-9–]/g,'').split('–')[0])*d.qty}–$${parseInt(d.price.replace(/[^0-9–]/g,'').split('–').pop())*d.qty} total`:''}</div>
+                  <div style="font-size:12px;color:var(--text-light);margin-top:1px;">${d.note}</div>
+                  <a class="line-link" href="${d.url}" target="_blank" rel="noopener sponsored">Check current price →</a>
+                </div>`).join('')}
+            </div>
+
+            <div class="line-total">
+              <div class="line-total-label">Estimated Phase 1 Total</div>
+              <div class="line-total-val">~$${calc.totalMin}–$${calc.totalMax}</div>
+              ${calc.remainMax>0?`<div class="line-remaining">~$${calc.remainMin}–$${calc.remainMax} remaining for Phase 2</div>`:`<div style="font-size:12px;color:var(--text-light);margin-top:4px;">Budget fully allocated — Phase 2 is your next spend</div>`}
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- COL 2: WHAT YOU GET -->
+      <div class="col-card">
+        <div class="col-head green">🏡 What this network does</div>
+        <div class="col-body">
+          <div class="what-body">${whatYouGet}</div>
+          <ul class="capability-list">
+            ${caps.map(c=>`<li><span class="cap-tick">✓</span>${c}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+
+      <!-- COL 3: EXPANSION PHASES -->
+      <div class="col-card">
+        <div class="col-head amber">🚀 How to expand</div>
+        <div class="col-body">
+          <div class="phase-list">
+            ${phases.map(p=>`
+              <div class="phase-item">
+                <div class="phase-head">
+                  <span class="phase-label">${p.phase} — ${p.label}</span>
+                  <span class="phase-cost">${p.cost}</span>
+                </div>
+                <div class="phase-desc">${p.desc}</div>
+                <div class="phase-unlock">Unlocks: ${p.unlock}</div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- DISCLAIMER -->
+    <div class="disclaimer">
+      <span class="disclaimer-icon">ℹ️</span>
+      <span>All prices shown are approximate USD estimates. Prices change frequently — always click the link to check the current price before purchasing. Prices vary by region, retailer and availability. Links may be affiliate links — zigbee.com.au may earn a small commission at no cost to you.</span>
+    </div>
+
+    <!-- RESTART -->
+    <div class="btn-row">
+      <button class="btn-restart" onclick="renderQ1()">↺ Start Over</button>
+      <button class="btn-restart" onclick="renderQ3()">← Change Priority</button>
+      <button class="btn-restart" onclick="renderQ2()">← Change Tech Level</button>
+    </div>
+
+  </div>`;
+}
+
+// ── INIT ──
+renderQ1();
+</script>
+</body>
+</html>
